@@ -1,0 +1,19 @@
+---
+- hosts: testvm
+  become: true
+  tasks:
+          - name: Add docker gpg apt key 
+            apt_key:
+                 url: https://download.docker.com/linux/ubuntu/gpg
+                 state: present 
+
+          - name: Add Docker Repository 
+            apt_repository: 
+                repo: deb https://download.docker.com/linux/ubuntu focal stable
+                state: present
+
+          - name: update apt and install docker
+            apt:
+                 name: docker-ce
+                 state: latest
+                 update_cache: true
