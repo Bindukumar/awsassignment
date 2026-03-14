@@ -1,2 +1,2 @@
 [testvm]
-vm1 ansible_host=192.168.31.12 ansible_user=jenkins
+vm1 ansible_host=20.193.135.76 ansible_user=jenkins
