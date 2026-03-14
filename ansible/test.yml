@@ -2,6 +2,6 @@
 - name: testing from job 2 
   hosts: all
   gather_facts: no
-  - tasks: 
+  - tasks:
     - name: just check the login works 
       ansible.builtin.shell: echo "print hello"
