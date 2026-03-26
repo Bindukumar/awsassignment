@@ -2,15 +2,42 @@ variable "github_token" {
   type = string
 }
 
+# -----------------------------
+# Artifact Buckets (East + West)
+# -----------------------------
+
+resource "aws_s3_bucket" "pipeline_bucket_east" {
+  bucket = "pipeline-artifacts-473427586352-east"
+}
+
+resource "aws_s3_bucket" "pipeline_bucket_west" {
+  bucket = "pipeline-artifacts-473427586352-west"
+}
+
+# -----------------------------
+# CodePipeline
+# -----------------------------
+
 resource "aws_codepipeline" "php_pipeline" {
   name     = "php-aws-pipeline"
   role_arn = aws_iam_role.codepipeline_role.arn
 
-  artifact_store {
-    location = aws_s3_bucket.pipeline_bucket.bucket
-    type     = "S3"
+  # MULTI-REGION ARTIFACT STORES
+  artifact_stores = {
+    "us-east-1" = {
+      location = aws_s3_bucket.pipeline_bucket_east.bucket
+      type     = "S3"
+    }
+
+    "us-west-2" = {
+      location = aws_s3_bucket.pipeline_bucket_west.bucket
+      type     = "S3"
+    }
   }
 
+  # -----------------------------
+  # Source Stage (GitHub v1 for now)
+  # -----------------------------
   stage {
     name = "Source"
 
@@ -31,6 +58,9 @@ resource "aws_codepipeline" "php_pipeline" {
     }
   }
 
+  # -----------------------------
+  # Build Stage
+  # -----------------------------
   stage {
     name = "Build"
 
@@ -49,6 +79,9 @@ resource "aws_codepipeline" "php_pipeline" {
     }
   }
 
+  # -----------------------------
+  # Deploy to Staging (us-east-1)
+  # -----------------------------
   stage {
     name = "Deploy_Staging"
 
@@ -59,6 +92,7 @@ resource "aws_codepipeline" "php_pipeline" {
       provider        = "ECS"
       input_artifacts = ["build_output"]
       version         = "1"
+      region          = "us-east-1"
 
       configuration = {
         ClusterName = aws_ecs_cluster.main.name
@@ -68,6 +102,9 @@ resource "aws_codepipeline" "php_pipeline" {
     }
   }
 
+  # -----------------------------
+  # Manual Approval
+  # -----------------------------
   stage {
     name = "Approval"
 
@@ -80,6 +117,9 @@ resource "aws_codepipeline" "php_pipeline" {
     }
   }
 
+  # -----------------------------
+  # Deploy to Prod East (us-east-1)
+  # -----------------------------
   stage {
     name = "Deploy_Prod_East"
 
@@ -90,6 +130,7 @@ resource "aws_codepipeline" "php_pipeline" {
       provider        = "ECS"
       input_artifacts = ["build_output"]
       version         = "1"
+      region          = "us-east-1"
 
       configuration = {
         ClusterName = aws_ecs_cluster.main.name
@@ -99,6 +140,9 @@ resource "aws_codepipeline" "php_pipeline" {
     }
   }
 
+  # -----------------------------
+  # Deploy to Prod West (us-west-2)
+  # -----------------------------
   stage {
     name = "Deploy_Prod_West"
 
@@ -109,12 +153,12 @@ resource "aws_codepipeline" "php_pipeline" {
       provider        = "ECS"
       input_artifacts = ["build_output"]
       version         = "1"
+      region          = "us-west-2"   # ✔ Correct region override
 
       configuration = {
         ClusterName = "php-aws-cluster"
         ServiceName = "php-aws-service"
         FileName    = "imagedefinitions.json"
-        Region      = "us-west-2"
       }
     }
   }
