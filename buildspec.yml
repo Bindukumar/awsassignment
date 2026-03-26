@@ -10,21 +10,22 @@ phases:
     commands:
       - echo Logging in to Amazon ECR...
       - ACCOUNT_ID=$(aws sts get-caller-identity --query account --output text)
-      - ECR_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_URI
+      - REGISTRY_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+      - REPOSITORY_URI=$REGISTRY_URI/$IMAGE_REPO_NAME
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $REGISTRY_URI
       - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
 
   build:
     commands:
       - echo Building Docker image...
       - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG ./website
-      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $ECR_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG
 
   post_build:
     commands:
       - echo Pushing Docker image...
-      - docker push $ECR_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
-      - printf '{"ImageURI":"%s"}' "$ECR_URI/$IMAGE_REPO_NAME:$IMAGE_TAG" > imageDetail.json
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - printf '{"ImageURI":"%s"}' "$REPOSITORY_URI:$IMAGE_TAG" > imageDetail.json
 
 artifacts:
   files:
