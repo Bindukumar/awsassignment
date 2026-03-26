@@ -4,12 +4,12 @@ env:
   variables:
     IMAGE_REPO_NAME: "php-aws-app"
     AWS_REGION: "us-east-1"
+    ACCOUNT_ID: "473427586352"
 
 phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
-      - ACCOUNT_ID=$(aws sts get-caller-identity --query account --output text)
       - REGISTRY_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
       - REPOSITORY_URI=$REGISTRY_URI/$IMAGE_REPO_NAME
       - echo "REGISTRY_URI=$REGISTRY_URI"
