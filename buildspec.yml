@@ -12,6 +12,7 @@ phases:
       - ACCOUNT_ID=$(aws sts get-caller-identity --query account --output text)
       - REGISTRY_URI=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
       - REPOSITORY_URI=$REGISTRY_URI/$IMAGE_REPO_NAME
+      - echo "REGISTRY_URI=$REGISTRY_URI"
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $REGISTRY_URI
       - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
 
